@@ -1,11 +1,13 @@
-
+#include <Wire.h>
 
 #include <radio.h>
 #include <RDA5807M.h>
-#include <Wire.h>
+
 #include <SSD1306Ascii.h>
 #include <SSD1306AsciiWire.h>
 
+// Encoder library -> https://github.com/AlexGyver/GyverLibs/tree/master/GyverEncoder
+#include "GyverEncoder.h"
 
 // Initial radio settings
 #define RDA_BAND     RADIO_BAND_FM
@@ -15,8 +17,19 @@
 #define OLED_I2C_ADDRESS 0x3C
 //#define RST_PIN -1
 
+// Encoder pins setup
+#define ENC_S1 6 // pin D6
+#define ENC_S2 5 // pin D5
+#define ENC_KEY 7 // pin D7
+
+// Init Radio library
 RDA5807M radio;
+
+// Init OLED library
 SSD1306AsciiWire oled;
+
+// Init Encoder library
+Encoder enc1(ENC_S1, ENC_S2, ENC_KEY);
 
 void setup() {
   radio.init();
@@ -36,8 +49,9 @@ void setup() {
   oled.set2X();
   oled.println("105.3 FM");
 
+  enc1.setType(TYPE2);
 }
 
 void loop() {
-  // Currently not in use
+  enc1.tick();
 } 
