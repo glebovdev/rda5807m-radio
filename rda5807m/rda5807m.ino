@@ -12,7 +12,6 @@
 // Initial radio settings
 #define RDA_BAND     RADIO_BAND_FM
 #define RDA_STATION  10530 
-#define RDA_VOLUME   1
 
 #define OLED_I2C_ADDRESS 0x3C
 //#define RST_PIN -1
@@ -31,10 +30,16 @@ SSD1306AsciiWire oled;
 // Init Encoder library
 Encoder enc1(ENC_S1, ENC_S2, ENC_KEY);
 
+#define MIN_VOLUME 0
+#define MAX_VOLUME 15
+bool isMute = false;
+byte volume = 1;
+
 void setup() {
+  //Serial.begin(9600);
+  
   radio.init();
   radio.setBandFrequency(RDA_BAND, RDA_STATION);
-  radio.setVolume(RDA_VOLUME);
   radio.setMono(false);
   radio.setMute(false);
 
@@ -50,8 +55,57 @@ void setup() {
   oled.println("105.3 FM");
 
   enc1.setType(TYPE2);
+
+  // TODO: get volume value from EEPROM or set default
+  setVolume(volume);  
 }
 
 void loop() {
   enc1.tick();
-} 
+
+  // Turn Encoder left -> turn volume down
+  if(enc1.isLeft()) {
+    volumeDown();      
+  }
+
+  // Turn Encoder right -> turn volume up
+  if(enc1.isRight()) {
+    volumeUp();
+  } 
+}
+
+void volumeDown()
+{
+  if(volume <= MIN_VOLUME) {
+    return;
+  }
+  
+  volume--;
+  
+  setVolume(volume);
+}
+
+void volumeUp()
+{
+  if(volume >= MAX_VOLUME) {
+    return;
+  }
+  
+  volume++;
+  
+  setVolume(volume);
+}
+
+void setVolume(byte volume) {
+  radio.setVolume(volume);
+  
+  if(volume == MIN_VOLUME) {
+    radio.setMute(true);
+    isMute = true;
+  }
+
+  if(volume > MIN_VOLUME && isMute == true){
+     radio.setMute(false);
+     isMute = false;
+  }
+}
