@@ -36,7 +36,9 @@ Encoder enc1(ENC_S1, ENC_S2, ENC_KEY);
 bool isMute = false;
 byte volume = 1;
 uint32_t dataUpdateTime; // don't need to check data on every ineration, use periods instead
-uint16_t updateRSSITimeout = 500; // update RSSI every 500ms
+uint16_t dataUpdateTimeout = 500; // update RSSI every 500ms
+
+void gap(byte number = 1, char delimiter = ' ');
 
 void setup() {
   //Serial.begin(9600);
@@ -82,8 +84,12 @@ void loop() {
   radio.getRadioInfo(&radioInfo);
 
   // Check timer and display RSSI info
-  if (millis() - dataUpdateTime > updateRSSITimeout) {
+  if (millis() - dataUpdateTime > dataUpdateTimeout) {
+
     displayRSSI();
+    gap(2);
+    displayStereoSign();
+
     dataUpdateTime = millis();
   }
 }
@@ -94,19 +100,38 @@ void displayRSSI() {
   oled.set1X();
 
   oled.print('[');
-  if (rssi > 0) oled.print('*'); else oled.print(' ');
-  if (rssi > 25) oled.print('*'); else oled.print(' ');
-  if (rssi > 35) oled.print('*'); else oled.print(' ');
-  if (rssi > 50) oled.print('*'); else oled.print(' ');
+  if (rssi > 0) oled.print('|'); else oled.print(' ');
+  if (rssi > 25) oled.print('|'); else oled.print(' ');
+  if (rssi > 35) oled.print('|'); else oled.print(' ');
+  if (rssi > 50) oled.print('|'); else oled.print(' ');
   oled.print(']');
+}
+
+void displayStereoSign() {
+  bool isStereo = getStereo();
+
+  if(isStereo == true) {
+    oled.setInvertMode(true);
+    oled.print(" St ");
+    oled.setInvertMode(false);
+  }
 }
 
 byte getRSSI() {
   return radioInfo.rssi;
 }
 
-void volumeDown()
-{
+bool getStereo() {
+  return radioInfo.stereo;
+}
+
+void gap(byte number, char delimiter) {
+  while (number-- > 0) {
+    oled.print(delimiter);
+  }
+}
+
+void volumeDown() {
   if (volume <= MIN_VOLUME) {
     return;
   }
@@ -116,8 +141,7 @@ void volumeDown()
   setVolume(volume);
 }
 
-void volumeUp()
-{
+void volumeUp() {
   if (volume >= MAX_VOLUME) {
     return;
   }
